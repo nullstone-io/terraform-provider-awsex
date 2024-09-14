@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-provider-awsex/internal/conns"
-	"github.com/hashicorp/terraform-provider-awsex/internal/service/cloudfront"
 )
 
 // Ensure AwsexProvider satisfies various provider interfaces.
@@ -158,7 +157,7 @@ func (p *AwsexProvider) ValidateConfig(ctx context.Context, request provider.Val
 
 func (p *AwsexProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		cloudfront.NewDistributionInvalidationResource,
+		NewCloudfrontDistributionInvalidationResource,
 	}
 }
 
