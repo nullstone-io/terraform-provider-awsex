@@ -8,6 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	cftypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -15,9 +17,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-provider-awsex/internal/conns"
+	"regexp"
 	"time"
 )
 
@@ -50,7 +54,7 @@ func (r *CloudfrontDistributionInvalidationResource) Schema(ctx context.Context,
 
 		Attributes: map[string]schema.Attribute{
 			"distribution_id": schema.StringAttribute{
-				MarkdownDescription: "",
+				MarkdownDescription: "The Cloudfront Distribution ID where an invalidation should be created.",
 				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -58,21 +62,25 @@ func (r *CloudfrontDistributionInvalidationResource) Schema(ctx context.Context,
 			},
 			"paths": schema.SetAttribute{
 				ElementType:         types.StringType,
-				MarkdownDescription: "",
+				MarkdownDescription: "A list of paths to invalidate. Each path *must* start with `/`.",
 				Required:            true,
 				PlanModifiers: []planmodifier.Set{
 					setplanmodifier.RequiresReplace(),
 				},
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(stringvalidator.RegexMatches(regexp.MustCompile(`^/`), "")),
+				},
 			},
 			"status": schema.StringAttribute{
-				Computed: true,
+				Description: "The status of the invalidation.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"triggers": schema.MapAttribute{
 				ElementType:         types.StringType,
-				MarkdownDescription: "",
+				MarkdownDescription: "A map of triggers that, when changed, will force Terraform to create a new invalidation.",
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.Map{
@@ -81,7 +89,8 @@ func (r *CloudfrontDistributionInvalidationResource) Schema(ctx context.Context,
 				},
 			},
 			"id": schema.StringAttribute{
-				Computed: true,
+				MarkdownDescription: "The ID of the invalidation.",
+				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
