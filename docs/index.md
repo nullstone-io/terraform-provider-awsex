@@ -6,14 +6,14 @@ description: |-
   
 ---
 
-# scaffolding Provider
+# AWS (Extensions) Provider
 
 
 
 ## Example Usage
 
 ```terraform
-provider "scaffolding" {
+provider "awsex" {
   # example configuration here
 }
 ```
