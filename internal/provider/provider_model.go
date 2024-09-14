@@ -10,14 +10,14 @@ import (
 type AwsexProviderModel struct {
 	// AccessKey
 	// The access key for API operations. You can retrieve this from the 'Security & Credentials' section of the AWS console.
-	AccessKey                 string                               `tfsdk:"access_key"`
+	AccessKey                 *string                              `tfsdk:"access_key"`
 	AssumeRole                *AwsexAssumeRoleModel                `tfsdk:"assume_role"`
 	AssumeRoleWithWebIdentity *AwsexAssumeRoleWithWebIdentityModel `tfsdk:"assume_role_with_web_identity"`
 	// CustomCaBundle
 	// File containing custom root and intermediate certificates.
 	// Can also be configured using the `AWS_CA_BUNDLE` environment variable.
 	// (Setting `ca_bundle` in the shared config file is not supported.)
-	CustomCaBundle string `tfsdk:"custom_ca_bundle"`
+	CustomCaBundle *string `tfsdk:"custom_ca_bundle"`
 	// HttpProxy
 	// URL of a proxy to use for HTTP requests when accessing the AWS API.
 	// Can also be set using the `HTTP_PROXY` or `http_proxy` environment variables.
@@ -29,29 +29,29 @@ type AwsexProviderModel struct {
 	// Insecure
 	// Explicitly allow the provider to perform "insecure" SSL requests.
 	// If omitted, default value is `false`
-	Insecure bool `tfsdk:"insecure"`
+	Insecure *bool `tfsdk:"insecure"`
 	// MaxRetries
 	// The maximum number of times an AWS API request is being executed.
 	// If the API request still fails, an error is thrown.
-	MaxRetries int `tfsdk:"max_retries"`
+	MaxRetries *int `tfsdk:"max_retries"`
 	// NoProxy
 	// Comma-separated list of hosts that should not use HTTP or HTTPS proxies.
 	// Can also be set using the `NO_PROXY` or `no_proxy` environment variables.
-	NoProxy string `tfsdk:"no_proxy"`
+	NoProxy *string `tfsdk:"no_proxy"`
 	// Profile
 	// The profile for API operations. If not set, the default profile created with `aws configure` will be used.
-	Profile string `tfsdk:"profile"`
+	Profile *string `tfsdk:"profile"`
 	// Region
 	// The region where AWS operations will take place.
 	// Examples are us-east-1, us-west-2, etc.
-	Region string `tfsdk:"region"`
+	Region *string `tfsdk:"region"`
 	// RetryMode
 	// Specifies how retries are attempted. Valid values are `standard` and `adaptive`.
 	// Can also be configured using the `AWS_RETRY_MODE` environment variable.
-	RetryMode string `tfsdk:"retry_mode"`
+	RetryMode *string `tfsdk:"retry_mode"`
 	// SecretKey
 	// The secret key for API operations. You can retrieve this from the 'Security & Credentials' section of the AWS console.
-	SecretKey string `tfsdk:"secret_key"`
+	SecretKey *string `tfsdk:"secret_key"`
 	// SharedConfigFiles
 	// List of paths to shared config files. If not set, defaults to [~/.aws/config].
 	SharedConfigFiles []string `tfsdk:"shared_config_files"`
@@ -60,12 +60,12 @@ type AwsexProviderModel struct {
 	SharedCredentialsFiles []string `tfsdk:"shared_credentials_files"`
 	// Token
 	// session token. A session token is only required if you are using temporary security credentials.
-	Token string `tfsdk:"token"`
+	Token *string `tfsdk:"token"`
 }
 
 func (m AwsexProviderModel) GetAwsBaseConfig(providerVersion, terraformVersion string) awsbase.Config {
 	awsbaseConfig := awsbase.Config{
-		AccessKey: m.AccessKey,
+		AccessKey: unptr(m.AccessKey),
 		APNInfo: &awsbase.APNInfo{
 			PartnerName: "Nullstone",
 			Products: []awsbase.UserAgentProduct{
@@ -77,20 +77,20 @@ func (m AwsexProviderModel) GetAwsBaseConfig(providerVersion, terraformVersion s
 		CallerDocumentationURL: "https://registry.terraform.io/providers/hashicorp/aws",
 		CallerName:             "Terraform AWS Provider",
 		//EC2MetadataServiceEnableState: m.EC2MetadataServiceEnableState,
-		Insecure: m.Insecure,
+		Insecure: unptr(m.Insecure),
 		//HTTPClient:    client.HTTPClient(ctx),
 		HTTPProxy:     m.HttpProxy,
 		HTTPSProxy:    m.HttpsProxy,
 		HTTPProxyMode: awsbase.HTTPProxyModeLegacy,
 		//Logger:                        logger,
 		//MaxBackoff:                    maxBackoff,
-		MaxRetries: m.MaxRetries,
-		NoProxy:    m.NoProxy,
-		Profile:    m.Profile,
-		Region:     m.Region,
-		RetryMode:  aws.RetryMode(m.RetryMode),
-		SecretKey:  m.SecretKey,
-		Token:      m.Token,
+		MaxRetries: unptr(m.MaxRetries),
+		NoProxy:    unptr(m.NoProxy),
+		Profile:    unptr(m.Profile),
+		Region:     unptr(m.Region),
+		RetryMode:  aws.RetryMode(unptr(m.RetryMode)),
+		SecretKey:  unptr(m.SecretKey),
+		Token:      unptr(m.Token),
 	}
 	m.AssumeRole.Configure(&awsbaseConfig)
 	m.AssumeRoleWithWebIdentity.Configure(&awsbaseConfig)
@@ -163,4 +163,12 @@ func (m *AwsexAssumeRoleWithWebIdentityModel) Configure(cfg *awsbase.Config) {
 		WebIdentityToken:     m.WebIdentityToken,
 		WebIdentityTokenFile: m.WebIdentityTokenFile,
 	}
+}
+
+func unptr[T any](val *T) T {
+	var t T
+	if val != nil {
+		return *val
+	}
+	return t
 }

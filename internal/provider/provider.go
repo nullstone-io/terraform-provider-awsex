@@ -50,16 +50,6 @@ func (p *AwsexProvider) Schema(ctx context.Context, req provider.SchemaRequest, 
 					"Can also be configured using the `AWS_CA_BUNDLE` environment variable. " +
 					"(Setting `ca_bundle` in the shared config file is not supported.)",
 			},
-			"ec2_metadata_service_endpoint": schema.StringAttribute{
-				Optional: true,
-				Description: "Address of the EC2 metadata service endpoint to use. " +
-					"Can also be configured using the `AWS_EC2_METADATA_SERVICE_ENDPOINT` environment variable.",
-			},
-			"ec2_metadata_service_endpoint_mode": schema.StringAttribute{
-				Optional: true,
-				Description: "Protocol to use with EC2 metadata service endpoint." +
-					"Valid values are `IPv4` and `IPv6`. Can also be configured using the `AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE` environment variable.",
-			},
 			"http_proxy": schema.StringAttribute{
 				Optional: true,
 				Description: "URL of a proxy to use for HTTP requests when accessing the AWS API. " +

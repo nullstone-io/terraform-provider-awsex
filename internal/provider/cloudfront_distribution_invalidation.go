@@ -31,16 +31,17 @@ func NewCloudfrontDistributionInvalidationResource() resource.Resource {
 	return &CloudfrontDistributionInvalidationResource{}
 }
 
-type DistributionInvalidationModel struct {
+type CloudfrontDistributionInvalidationModel struct {
 	Id             types.String   `tfsdk:"id"`
 	DistributionId types.String   `tfsdk:"distribution_id"`
 	Paths          types.Set      `tfsdk:"paths"`
 	Status         types.String   `tfsdk:"status"`
+	Triggers       types.Map      `tfsdk:"triggers"`
 	Timeouts       timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (r *CloudfrontDistributionInvalidationResource) Metadata(ctx context.Context, request resource.MetadataRequest, response *resource.MetadataResponse) {
-	response.TypeName = request.ProviderTypeName + "_distribution_invalidation"
+	response.TypeName = request.ProviderTypeName + "_cloudfront_distribution_invalidation"
 }
 
 func (r *CloudfrontDistributionInvalidationResource) Schema(ctx context.Context, request resource.SchemaRequest, response *resource.SchemaResponse) {
@@ -72,8 +73,10 @@ func (r *CloudfrontDistributionInvalidationResource) Schema(ctx context.Context,
 			"triggers": schema.MapAttribute{
 				ElementType:         types.StringType,
 				MarkdownDescription: "",
+				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.RequiresReplace(),
 					mapplanmodifier.UseStateForUnknown(),
 				},
 			},
@@ -112,7 +115,7 @@ func (r *CloudfrontDistributionInvalidationResource) Configure(ctx context.Conte
 }
 
 func (r *CloudfrontDistributionInvalidationResource) Create(ctx context.Context, request resource.CreateRequest, response *resource.CreateResponse) {
-	var data DistributionInvalidationModel
+	var data CloudfrontDistributionInvalidationModel
 	response.Diagnostics.Append(request.Plan.Get(ctx, &data)...)
 	if response.Diagnostics.HasError() {
 		return
@@ -124,11 +127,15 @@ func (r *CloudfrontDistributionInvalidationResource) Create(ctx context.Context,
 		return
 	}
 
+	if data.Triggers.IsUnknown() {
+		data.Triggers = types.MapNull(types.StringType)
+	}
+
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 
 func (r *CloudfrontDistributionInvalidationResource) Read(ctx context.Context, request resource.ReadRequest, response *resource.ReadResponse) {
-	var data DistributionInvalidationModel
+	var data CloudfrontDistributionInvalidationModel
 	response.Diagnostics.Append(request.State.Get(ctx, &data)...)
 	if response.Diagnostics.HasError() {
 		return
@@ -156,7 +163,7 @@ func (r *CloudfrontDistributionInvalidationResource) Update(ctx context.Context,
 func (r *CloudfrontDistributionInvalidationResource) Delete(ctx context.Context, request resource.DeleteRequest, response *resource.DeleteResponse) {
 }
 
-func (r *CloudfrontDistributionInvalidationResource) createInvalidation(ctx context.Context, data DistributionInvalidationModel) (DistributionInvalidationModel, diag.Diagnostics) {
+func (r *CloudfrontDistributionInvalidationResource) createInvalidation(ctx context.Context, data CloudfrontDistributionInvalidationModel) (CloudfrontDistributionInvalidationModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	distributionId := data.DistributionId.ValueString()
@@ -210,7 +217,7 @@ func (r *CloudfrontDistributionInvalidationResource) createInvalidation(ctx cont
 	return data, diags
 }
 
-func (r *CloudfrontDistributionInvalidationResource) findInvalidation(ctx context.Context, data DistributionInvalidationModel) (*cftypes.Invalidation, diag.Diagnostics) {
+func (r *CloudfrontDistributionInvalidationResource) findInvalidation(ctx context.Context, data CloudfrontDistributionInvalidationModel) (*cftypes.Invalidation, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var inval *cftypes.Invalidation
 

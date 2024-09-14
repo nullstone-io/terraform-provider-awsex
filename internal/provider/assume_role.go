@@ -17,6 +17,7 @@ import (
 
 func assumeRoleSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
+		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"duration": schema.StringAttribute{
 				CustomType:  timetypes.GoDurationType{},
@@ -92,6 +93,7 @@ func assumeRoleSchema() schema.Attribute {
 
 func assumeRoleWithWebIdentitySchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
+		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"duration": schema.StringAttribute{
 				CustomType:  timetypes.GoDurationType{},
