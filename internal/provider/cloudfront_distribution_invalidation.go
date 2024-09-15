@@ -86,7 +86,6 @@ func (r *CloudfrontDistributionInvalidationResource) Schema(ctx context.Context,
 				Computed:            true,
 				PlanModifiers: []planmodifier.Map{
 					mapplanmodifier.RequiresReplace(),
-					mapplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"id": schema.StringAttribute{
