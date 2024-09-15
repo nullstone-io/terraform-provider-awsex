@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
 	cftypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -186,7 +187,7 @@ func (r *CloudfrontDistributionInvalidationResource) createInvalidation(ctx cont
 	input := &cloudfront.CreateInvalidationInput{
 		DistributionId: &distributionId,
 		InvalidationBatch: &cftypes.InvalidationBatch{
-			CallerReference: aws.String("terraform-provider-awsex"),
+			CallerReference: aws.String(uuid.NewString()),
 			Paths: &cftypes.Paths{
 				Quantity: aws.Int32(int32(len(paths))),
 				Items:    paths,
