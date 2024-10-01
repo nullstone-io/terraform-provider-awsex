@@ -1,8 +1,15 @@
+## 0.1.3 (Oct 01, 2024)
+
+FEATURES:
+- New Resource: `awsex_cloudfront_distribution_invalidations`
+
 ## 0.1.2 (Sep 14, 2024)
+
 BUG FIXES:
 - Fixed `triggers` so that they force a new resource when changed.
 
 ## 0.1.1 (Sep 14, 2024)
+
 BUG FIXES:
 - Fixed caller reference for create invalidation.
 

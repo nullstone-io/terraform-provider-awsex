@@ -148,6 +148,7 @@ func (p *AwsexProvider) ValidateConfig(ctx context.Context, request provider.Val
 func (p *AwsexProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewCloudfrontDistributionInvalidationResource,
+		NewCloudfrontDistributionInvalidationsResource,
 	}
 }
 
