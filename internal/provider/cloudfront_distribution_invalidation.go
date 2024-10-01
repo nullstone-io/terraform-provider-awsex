@@ -2,16 +2,10 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
-	cftypes "github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
@@ -20,8 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-provider-awsex/internal/conns"
+	"github.com/hashicorp/terraform-provider-awsex/internal/provider/cloudfront"
 	"regexp"
 	"time"
 )
@@ -130,12 +124,22 @@ func (r *CloudfrontDistributionInvalidationResource) Create(ctx context.Context,
 		return
 	}
 
-	data, diags := r.createInvalidation(ctx, data)
+	createTimeout, diags := data.Timeouts.Create(ctx, 30*time.Minute)
+	response.Diagnostics.Append(diags...)
+	paths := make([]string, 0)
+	response.Diagnostics.Append(data.Paths.ElementsAs(ctx, &paths, false)...)
+	if response.Diagnostics.HasError() {
+		return
+	}
+
+	inval, diags := cloudfront.CreateInvalidation(ctx, r.client, data.DistributionId.ValueString(), paths, createTimeout)
 	response.Diagnostics.Append(diags...)
 	if response.Diagnostics.HasError() {
 		return
 	}
 
+	data.Id = types.StringPointerValue(inval.Id)
+	data.Status = types.StringPointerValue(inval.Status)
 	if data.Triggers.IsUnknown() {
 		data.Triggers = types.MapNull(types.StringType)
 	}
@@ -150,7 +154,7 @@ func (r *CloudfrontDistributionInvalidationResource) Read(ctx context.Context, r
 		return
 	}
 
-	inval, diags := r.findInvalidation(ctx, data)
+	inval, diags := cloudfront.FindInvalidation(ctx, r.client, data.DistributionId.ValueString(), data.Id.ValueString())
 	response.Diagnostics.Append(diags...)
 	if response.Diagnostics.HasError() {
 		return
@@ -170,80 +174,4 @@ func (r *CloudfrontDistributionInvalidationResource) Update(ctx context.Context,
 }
 
 func (r *CloudfrontDistributionInvalidationResource) Delete(ctx context.Context, request resource.DeleteRequest, response *resource.DeleteResponse) {
-}
-
-func (r *CloudfrontDistributionInvalidationResource) createInvalidation(ctx context.Context, data CloudfrontDistributionInvalidationModel) (CloudfrontDistributionInvalidationModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	distributionId := data.DistributionId.ValueString()
-
-	paths := make([]string, 0)
-	diags = append(diags, data.Paths.ElementsAs(ctx, &paths, false)...)
-	if diags.HasError() {
-		return data, diags
-	}
-
-	input := &cloudfront.CreateInvalidationInput{
-		DistributionId: &distributionId,
-		InvalidationBatch: &cftypes.InvalidationBatch{
-			CallerReference: aws.String(uuid.NewString()),
-			Paths: &cftypes.Paths{
-				Quantity: aws.Int32(int32(len(paths))),
-				Items:    paths,
-			},
-		},
-	}
-	client := r.client.Cloudfront()
-	out, err := client.CreateInvalidation(ctx, input)
-	if err != nil {
-		diags.AddError("Error creating AWS Cloudfront Invalidation", err.Error())
-		return data, diags
-	}
-	if out != nil && out.Invalidation != nil && out.Invalidation.Id != nil {
-		data.Id = types.StringValue(*out.Invalidation.Id)
-		tflog.Trace(ctx, "Created Cloudfront Invalidation")
-	} else {
-		diags.AddWarning("Unable to create AWS Cloudfront Invalidation.", "AWS did not create an invalidation and gave no reason")
-	}
-
-	createTimeout, diags := data.Timeouts.Create(ctx, 30*time.Minute)
-	if diags.HasError() {
-		return data, diags
-	}
-
-	waiter := cloudfront.NewInvalidationCompletedWaiter(client)
-	res, err := waiter.WaitForOutput(ctx, &cloudfront.GetInvalidationInput{
-		DistributionId: aws.String(distributionId),
-		Id:             out.Invalidation.Id,
-	}, createTimeout)
-	if err != nil {
-		diags.AddError("Error waiting for creation of AWS Cloudfront Invalidation", err.Error())
-		return data, diags
-	} else if res.Invalidation != nil {
-		data.Status = types.StringPointerValue(res.Invalidation.Status)
-	}
-
-	return data, diags
-}
-
-func (r *CloudfrontDistributionInvalidationResource) findInvalidation(ctx context.Context, data CloudfrontDistributionInvalidationModel) (*cftypes.Invalidation, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	var inval *cftypes.Invalidation
-
-	input := &cloudfront.GetInvalidationInput{
-		DistributionId: data.DistributionId.ValueStringPointer(),
-		Id:             data.Id.ValueStringPointer(),
-	}
-	client := r.client.Cloudfront()
-	out, err := client.GetInvalidation(ctx, input)
-	if err != nil {
-		var nsi *cftypes.NoSuchInvalidation
-		if !errors.As(err, &nsi) {
-			diags.AddError("error getting AWS Invalidation", err.Error())
-		}
-	}
-	if out != nil && out.Invalidation != nil {
-		inval = out.Invalidation
-	}
-	return inval, diags
 }

@@ -36,6 +36,16 @@ func (p *AwsexProvider) Metadata(ctx context.Context, req provider.MetadataReque
 
 func (p *AwsexProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Extension to AWS Provider",
+		MarkdownDescription: `
+This is a Terraform provider to extend the functionality of the [AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs).
+
+At time of creation, Hashicorp had few review resources dedicated to the provider.
+As a result, there are over 400 open pull requests, many older than 4 years.
+
+The purpose of this provider is to rapidly augment the official provider.
+This can also be used to rapidly experiment with new resources.
+`,
 		Attributes: map[string]schema.Attribute{
 			"access_key": schema.StringAttribute{
 				Optional: true,
@@ -148,6 +158,7 @@ func (p *AwsexProvider) ValidateConfig(ctx context.Context, request provider.Val
 func (p *AwsexProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewCloudfrontDistributionInvalidationResource,
+		NewCloudfrontDistributionInvalidationsResource,
 	}
 }
 
