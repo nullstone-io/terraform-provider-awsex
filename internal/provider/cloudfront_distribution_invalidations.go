@@ -60,7 +60,6 @@ func (r *CloudfrontDistributionInvalidationsResource) Schema(ctx context.Context
 					setplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.Set{
-					setvalidator.SizeAtLeast(1),
 					setvalidator.ValueStringsAre(
 						stringvalidator.LengthAtLeast(1),
 					),
