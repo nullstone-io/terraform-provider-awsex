@@ -134,7 +134,7 @@ func (p *AwsexProvider) Configure(ctx context.Context, req provider.ConfigureReq
 
 	tflog.Debug(ctx, "Configuring Terraform AWS Provider")
 	awsbaseConfig := model.GetAwsBaseConfig(p.version, req.TerraformVersion)
-	ctx, cfg, basediags := awsbase.GetAwsConfig(ctx, &awsbaseConfig)
+	_, cfg, basediags := awsbase.GetAwsConfig(ctx, &awsbaseConfig)
 	for _, d := range basediags {
 		switch int(d.Severity()) {
 		case int(diag.SeverityError):

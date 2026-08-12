@@ -143,7 +143,7 @@ func testAccCreateCdn(t *testing.T, name, domainName string) string {
 	}
 
 	t.Cleanup(func() {
-		client.DeleteDistribution(ctx, &cloudfront.DeleteDistributionInput{
+		_, _ = client.DeleteDistribution(ctx, &cloudfront.DeleteDistributionInput{
 			Id: out.Distribution.Id,
 		})
 	})
