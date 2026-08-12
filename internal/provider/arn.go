@@ -26,12 +26,12 @@ var (
 // * Have a valid region
 // * Have either an empty or valid account ID
 // * Have a non-empty resource part
-// * Pass the supplied checks
+// * Pass the supplied checks.
 type ArnValidator struct {
 }
 
 func (v ArnValidator) Description(ctx context.Context) string {
-	return fmt.Sprintf("string must be a valid ARN")
+	return "string must be a valid ARN"
 }
 
 func (v ArnValidator) MarkdownDescription(ctx context.Context) string {

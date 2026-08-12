@@ -1,3 +1,7 @@
+## 0.1.4 (Aug 11, 2026)
+UPDATES:
+- Updated dependencies to the latest.
+
 ## 0.1.3 (Oct 01, 2024)
 
 FEATURES:
