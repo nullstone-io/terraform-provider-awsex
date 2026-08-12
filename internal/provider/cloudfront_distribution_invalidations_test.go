@@ -10,6 +10,38 @@ func TestAccDistributionInvalidations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping long-running test in short mode")
 	}
+	testAccPreCheckLiveAws(t)
+
+	cdn1Id := testAccCreateCdn(t, "test1", "www.example1.com")
+	cdn2Id := testAccCreateCdn(t, "test2", "www.example2.com")
+	config1 := providerConfig + fmt.Sprintf(`
+resource "awsex_cloudfront_distribution_invalidations" "test" {
+  distribution_ids = [%[1]q, %[2]q]
+  paths            = ["/*"]
+}
+`, cdn1Id, cdn2Id)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("awsex_cloudfront_distribution_invalidations.test", "id"),
+					resource.TestCheckResourceAttr("awsex_cloudfront_distribution_invalidations.test", "statuses.%", "2"),
+					resource.TestCheckResourceAttr("awsex_cloudfront_distribution_invalidations.test", fmt.Sprintf("statuses.%s", cdn1Id), "Completed"),
+					resource.TestCheckResourceAttr("awsex_cloudfront_distribution_invalidations.test", fmt.Sprintf("statuses.%s", cdn2Id), "Completed"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccDistributionInvalidations_mock runs the same lifecycle against an in-process mock
+// CloudFront API, so it runs anywhere without AWS credentials or real infrastructure.
+func TestAccDistributionInvalidations_mock(t *testing.T) {
+	testAccMockCloudfront(t)
 
 	cdn1Id := testAccCreateCdn(t, "test1", "www.example1.com")
 	cdn2Id := testAccCreateCdn(t, "test2", "www.example2.com")
