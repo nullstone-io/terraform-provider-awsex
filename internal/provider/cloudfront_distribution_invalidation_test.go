@@ -97,8 +97,8 @@ func testAccCreateCdn(t *testing.T, name, domainName string) string {
 				},
 				TargetOriginId:       aws.String(name),
 				ViewerProtocolPolicy: "allow-all",
-				MinTTL:               aws.Int64(0),
-				ForwardedValues: &cftypes.ForwardedValues{
+				MinTTL:               aws.Int64(0), //nolint:staticcheck // legacy cache-behavior field; the fixture predates cache policies
+				ForwardedValues: &cftypes.ForwardedValues{ //nolint:staticcheck // legacy cache-behavior field; the fixture predates cache policies
 					QueryString: aws.Bool(false),
 					Cookies:     &cftypes.CookiePreference{Forward: cftypes.ItemSelectionAll},
 				},
